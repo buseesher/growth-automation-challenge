@@ -1,4 +1,4 @@
-# Growth Automation & AI Ops Intern Challenge 🚀
+# Growth Automation & AI Ops Intern Challenge 
 
 Bu proje, "Konuşarak Öğren" platformunun Türkiye'deki İnsan Kaynakları profesyonellerine ulaşmasını sağlamak amacıyla geliştirilmiş, uçtan uca çalışan bir büyüme otomasyonu ve AI Ops prototipidir.
 
