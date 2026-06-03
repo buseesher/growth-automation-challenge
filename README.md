@@ -1,6 +1,6 @@
 # Growth Automation & AI Ops Intern Challenge 🚀
 
-Bu proje, "Konuşarak Öğren" platformunun Türkiye'deki İnsan Kaynakları profesyonellerine ulaşmasını sağlamak amacıyla geliştirilmiş, uçtan uca çalışan minimum bir büyüme otomasyonu ve AI Ops prototipidir.
+Bu proje, "Konuşarak Öğren" platformunun Türkiye'deki İnsan Kaynakları profesyonellerine ulaşmasını sağlamak amacıyla geliştirilmiş, uçtan uca çalışan bir büyüme otomasyonu ve AI Ops prototipidir.
 
 ## 🏗️ Sistem Mimarisi & Workflow
 
@@ -8,7 +8,7 @@ Proje, kısıtlı kaynaklar ve bütçe limitleri göz önünde bulundurularak ma
 
 ```text
 [Data Scraping: Phantombuster] 
-               │ (Gerçek seed veri çekimi: 10 Karar Verici)
+               │ (Gerçek seed veri çekimi: 10 Key Persona)
                ▼
 [Data Cleaning & Augmentation: Pandas] 
                │ (Limitler için veri manipülasyonu & 100+ kayıt üretimi)
@@ -49,5 +49,8 @@ leads.csv: Phantombuster'dan çekilen ham veri seti
 
 enriched_leads_crm.csv: AI tarafından zenginleştirilmiş, skorlanmış ve outreach mesajları eklenmiş 106 satırlık nihai CRM veri tabanı
 
+## 📊 İzlediğim yol ve kritik detaylar
+
+Phantombuster'dan veri çekerken upgrade etmemek için ücretsi
 
 
