@@ -2,24 +2,23 @@ import os
 import pandas as pd
 import time
 import random
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
-# Upload the API key from the .env file
+# .env dosyasından API anahtarını yükle
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Yeni, güncel SDK istemcisi
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 def augment_data(df_clean):
     """
-    10 kişilik gerçek datayı (image_a09ab2.png) baz alarak 
-    100+ kişilik mantıklı bir dataset üretir.
+    10 kişilik gerçek datayı baz alarak 100+ kişilik mantıklı bir dataset üretir.
     """
     print("🔄 Veri Çoğaltma (Data Augmentation) başlatılıyor...")
     
-    # Create a pool from the existing data
     first_names = df_clean['firstName'].dropna().tolist()
     last_names = df_clean['lastName'].dropna().tolist()
     companies = df_clean['company'].dropna().tolist()
@@ -27,12 +26,11 @@ def augment_data(df_clean):
     
     augmented_rows = []
     while len(augmented_rows) < 95:
-        f_name = random.choice(first_names)
-        l_name = random.choice(last_names)
-        comp = random.choice(companies)
+        f_name = random.choice(first_names).strip()
+        l_name = random.choice(last_names).strip()
+        comp = random.choice(companies).strip()
         title = random.choice(titles)
         
-        # Realistic email production
         email = f"{f_name.lower()}.{l_name.lower()}@company.com"
         
         new_row = {
@@ -48,47 +46,76 @@ def augment_data(df_clean):
     return pd.concat([df_clean, pd.DataFrame(augmented_rows)], ignore_index=True)
 
 def main():
-    # read data
     try:
-        # To fix Turkish character errors in Excel, used utf-8
         df = pd.read_csv("leads.csv", encoding="utf-8")
     except FileNotFoundError:
         print("❌ leads.csv bulunamadı!")
         return
 
-    # Cleaning
+    # Temizlik
     df_clean = df.dropna(subset=['firstName', 'company'])
-    df_clean = df_clean[~df_clean['firstName'].str.contains("Export limit|Upgrade", case=False, na=False)]
+    df_clean = df_clean[~df_clean['firstName'].str.contains("Export limit|Upgrade", case=False, na=False)].copy()
     
-    # 3. complete data 100+
+    # Veriyi 100+'e tamamla
     df_final = augment_data(df_clean)
     
-    # AI Analyz ve Outreach
-    # Let's perform AI analysis on the first 15 people so the prototype works quickly
-    # If you want, you can delete the '[:15]' part from the loop.
-    results = []
+    # AI analizi için yeni sütunları önceden tanımla
+    df_final['Sector_PainPoint'] = "Analiz Edilmedi"
+    df_final['Lead_Score'] = "Analiz Edilmedi"
+    df_final['LinkedIn_DM_1'] = "Analiz Edilmedi"
+    df_final['LinkedIn_DM_3'] = "Analiz Edilmedi"
+    
+    print("🤖 AI Enrichment ve Outreach Taslağı Oluşturma Başlıyor...")
+    
+    # Hızlı prototip için ilk 15 kişiyi analiz et
     for index, row in df_final[:15].iterrows():
-        print(f"🔄 Analiz ediliyor ({index+1}): {row['firstName']} @ {row['company']}")
+        print(f"🔄 Analiz ediliyor ({index+1}/15): {row['firstName']} @ {row['company']}")
         
         prompt = f"""
-        Şirket: {row['company']}, Ünvan: {row['jobTitle']}, İsim: {row['firstName']}
-        1. Bu şirketin sektörü ve İngilizce eğitim ihtiyacı nedir?
-        2. Lead Skoru (High/Medium/Low) ver ve nedenini açıkla.
-        3. Kişiselleştirilmiş 1. Gün ve 3. Gün LinkedIn mesajlarını oluştur.
-        Format: Sektör || Pain Point || Skor || Mesaj 1 || Mesaj 3
+        Sen 'Konuşarak Öğren' (Kurumsal İngilizce Eğitim Platformu) için çalışan bir Growth AI Agent'sın.
+        Hedef Lead Bilgisi -> Şirket: {row['company']}, Ünvan: {row['jobTitle']}, İsim: {row['firstName']}
+        
+        Senden isteklerim:
+        1. Bu şirketin tahmini sektörü ve kurumsal İngilizce eğitimindeki en büyük pain point'i (sorunu) nedir? (Kısa özet)
+        2. Konuşarak Öğren için Lead Skoru (High/Medium/Low) ne olmalıdır?
+        3. Bu IK profesyoneline atılacak, samimi, generic olmayan, merak uyandıran 1. Gün ve 3. Gün cold LinkedIn DM mesajlarını oluştur. (Mesajlarda [İsim] veya [Şirket] gibi placeholder kullanma, doğrudan kişiye uyarla.)
+        
+        Yanıtını KESİNLİKLE sadece aşağıdaki formatta ver, ekstra açıklama ekleme:
+        Sektör ve Pain Point Buraya || Skor Buraya || Mesaj 1 Buraya || Mesaj 3 Buraya
         """
         
         try:
-            response = model.generate_content(prompt)
-            results.append(response.text.split("||"))
-        except:
-            results.append(["Hata"] * 5)
+            # Yeni SDK ile istek atma 
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
+            
+            # Gelen yanıtı parçala
+            ai_output = response.text.strip()
+            parts = [p.strip() for p in ai_output.split("||")]
+            
+            if len(parts) >= 4:
+                df_final.at[index, 'Sector_PainPoint'] = parts[0]
+                df_final.at[index, 'Lead_Score'] = parts[1]
+                df_final.at[index, 'LinkedIn_DM_1'] = parts[2]
+                df_final.at[index, 'LinkedIn_DM_3'] = parts[3]
+            else:
+                print(f"⚠️ AI çıktısı beklenen formatta gelmedi, ham veri yazılıyor.")
+                df_final.at[index, 'Sector_PainPoint'] = ai_output[:50]
+                df_final.at[index, 'LinkedIn_DM_1'] = ai_output
+                
+        except Exception as e:
+            print(f"❌ {row['firstName']} analiz edilirken hata oluştu: {str(e)}")
+            df_final.at[index, 'Sector_PainPoint'] = "Hata Oluştu"
         
-        time.sleep(4) # # Free data protection
+        # Rate limit yememek ve stabilite için kısa bekleme
+        time.sleep(2)
 
-    # Save the results (make Excel compatible with UTF-8-SIG)
+    # Güncellenmiş Excel-CRM uyumlu CSV'yi kaydet
     df_final.to_csv("enriched_leads_crm.csv", index=False, encoding='utf-8-sig')
-    print("✅ CRM Dosyası Hazır: enriched_leads_crm.csv")
+    print("\n🚀 İŞLEM TAMAMLANDI!")
+    print("✅ Yeni CRM Sütunları Eklendi ve 'enriched_leads_crm.csv' başarıyla kaydedildi.")
 
 if __name__ == "__main__":
     main()
