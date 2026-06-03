@@ -51,13 +51,13 @@ enriched_leads_crm.csv: AI tarafından zenginleştirilmiş, skorlanmış ve outr
 
 ## 🛠️ İzlediğim yol ve kritik detaylar
 
-Phantombuster'dan veri çekerken upgrade etmemek için ücretsiz şekilde yararlandım ve 10 kişinin verisini indirme hakkım vardı.
+Gerçek veri toplama kısmında Phantombuster'dan yararlandım. Phantombuster'dan veri çekerken ücretsiz şekilde yararlanmak için upgrade etmeden kullandım ve bu kullanımda 100 kişilik canlı veri elde etsem de sadece 10 kişinin verisini indirme hakkım vardı.
 
 Bu 10 kişinin verisini indirdikten sonra gerekli sayıyı tamamlamak için `augment_data` fonksiyonu kullandım ve veri sayısını arttırdım. 
 
-İndirdiğim dosyada türkçe karakter gözükmüyordu. Bu sorunu `utf` ile çözdüm. Ve dosyanın içinde gelen limite ulaşılığı ve upgrade etmem gerektiği yazan satırları da cleaning aşamasında sildim.Şirketin teslim beklentisi olan 100+ kişilik havuzu simüle etmek için Python'ın `random` kütüphanesini kullanarak, eldeki gerçek verilerden mantıklı kombinasyonlar üreten ve kurumsal mail formatlarına uygun (`isim.soyisim@company.com`) bir veri çoğaltma algoritması yazdım.
+İndirdiğim dosyada türkçe karakterler gözükmüyordu. Bu sorunu `utf` ile çözdüm. Ve dosyanın içinde "gelen limite ulaşılığı ve upgrade etmem gerektiği" yazan satırları da cleaning aşamasında sildim. Şirketin teslim beklentisi olan 100+ kişilik havuzu simüle etmek için Python'ın `random` kütüphanesini kullanarak, eldeki gerçek verilerden mantıklı kombinasyonlar üreten ve kurumsal mail formatlarına uygun (`isim.soyisim@company.com`) bir veri çoğaltma algoritması yazdım.
 
-Analiz ve Pipeline aşamasında Verileri işledikten sonra, her lead'in analiz çıktılarını (`Sektör`, `Pain Point`, `Lead Score`, `LinkedIn DM Taslakları`) doğrudan DataFrame üzerinde dinamik sütunlar olarak besleyen bir otomasyon mantığı kurdum.
+Analiz ve Pipeline aşamasında verileri işledikten sonra, her lead'in analiz çıktılarını (`Sektör`, `Pain Point`, `Lead Score`, `LinkedIn DM Taslakları`) doğrudan DataFrame üzerinde dinamik sütunlar olarak besleyen bir otomasyon mantığı kurdum.
 
 Prototipi hızlıca test etmek ve veri akışında sekteye uğramamak için tüm bu işlemleri sadece ilk 15 kişide uygulanacak şekilde süreci kurguladım. Bu yüzden üretilen `enriched_leads_crm.csv` dosyasında da ilgili veriler sadece bahsi geçen kişiler için yana kaydırıldığında görülebilmektedir. 
 
@@ -76,6 +76,22 @@ API kısmında ücretsiz olarak faydalanabileceklerimden `GEMINI_API_KEY`ı terc
 Google'ın eski `google.generativeai` paketine ait desteğin sonlanması sebebiyle, projeyi geleceğe uyumlu kılmak adına en güncel `google-genai` SDK'sına geçiş yaptım. Ancak bu geçiş esnasında model isimlendirme formatındaki (`models/gemini-1.5-flash`) ön ek uyuşmazlığından dolayı API tarafında `404 NOT_FOUND` hatası tetiklendi.
 
 Çözüm: Hatayı terminal loglarından hızlıca debug ederek yeni SDK istemcisinin (`genai.Client`) model çağırma standartlarını inceledim. Model ismini ön eki olmadan, 2026 standartlarında en güncel, hızlı ve maliyet-etkin çalışan **`gemini-2.5-flash`** mimarisine güncelleyerek API entegrasyonunu tamamen stabil hale getirdim.
+
+## 🎯 Bonus Başarı Kriterleri (Delivered Bonuses)
+
+Challenge metninde listelenen bonus isterlerden, sistem mimarisine doğrudan entegre ettiğim ve prototip üzerinde çalışan maddeler şunlardır:
+
+ 1.AI Agent Workflow (Yapay Zeka Ajan Akışı)
+
+LLM'i sadece basit bir metin üretici olarak kullanmak yerine, prompt seviyesinde ona *"Konuşarak Öğren Kurumsal Büyüme Ajanı"* rolünü atadım. Ajan; girdi olarak verilen HR profesyonelinin şirketini, unvanını ve sektörünü analiz ederek tamamen şirkete özel kurumsal İngilizce "pain point" tahminlemesi yapmaktadır.
+
+ 2.Lead Scoring (Potansiyel Müşteri Puanlaması)
+
+CRM verimliliğini artırmak ve satış (outbound) ekibinin en doğru lead'lere odaklanmasını sağlamak amacıyla dinamik bir puanlama mekanizması kurulmuştur. Yapay zeka ajanına verilen kurumsal kriterler doğrultusunda, her lead için **High / Medium / Low** şeklinde akıllı bir segmentasyon yapılmış ve bu skorların mantıksal nedenleri veri tabanına işlenmiştir.
+
+3.CRM Pipeline Entegrasyonu
+
+Üretilen ve zenginleştirilen tüm veriler, herhangi bir modern CRM platformuna (HubSpot, Salesforce, Pipedrive vb.) veya otomasyon aracına (n8n, Make) doğrudan import edilebilecek şekilde tasarlanmıştır. Çıktı dosyası (`enriched_leads_crm.csv`), Türkçe karakter uyumluluğu gözetilerek (`utf-8-sig`) normalize edilmiş hazır bir veri boru hattı (data pipeline) sunar.
 
 
 
